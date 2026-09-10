@@ -183,10 +183,11 @@ function render(state) {
       .map((v) => {
         const h = Math.max(12, Math.round((counts[v] / max) * MAX_H));
         const cls = counts[v] === max ? ' mode' : '';
-        return `<div class="tally-col${cls}"><span class="tally-n">${counts[v]}</span><span class="tally-bar${cls}" style="height:${h}px"></span><span class="tally-val">${v}</span></div>`;
+        const votes = counts[v] === 1 ? '1 vote' : `${counts[v]} votes`;
+        return `<div class="tally-col${cls}"><span class="tally-n">${votes}</span><span class="tally-bar${cls}" style="height:${h}px"></span><span class="tally-val">${v}</span><span class="tally-cap">points</span></div>`;
       })
       .join('');
-    let html = `<div class="tally-title">Results</div><div class="tally">${cols}</div><span class="sub">${stats.votedCount} card${stats.votedCount === 1 ? '' : 's'} revealed</span>`;
+    let html = `<div class="tally-title">Results — votes per estimate</div><div class="tally">${cols}</div><span class="sub">${stats.votedCount} of ${players.length} revealed</span>`;
     if (stats && stats.consensus) html += `<div class="agree">Everyone agrees! 🎉</div>`;
     tableMsg.innerHTML = html;
   }

@@ -131,16 +131,17 @@ button { font-family: inherit; cursor: pointer; }
 }
 /* pale-blue well behind the chart, echoing the app's circular icon wells */
 .tally {
-  display: flex; align-items: flex-end; justify-content: center; gap: 18px;
-  min-height: 72px; background: var(--well); border-radius: 16px; padding: 18px 22px 14px;
+  display: flex; align-items: flex-end; justify-content: center; gap: 22px;
+  min-height: 72px; background: var(--well); border-radius: 16px; padding: 16px 24px 14px;
 }
 .tally-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.tally-col .tally-n { font-size: 13px; font-weight: 800; color: var(--muted); }
-.tally-bar { width: 26px; background: var(--blue); border-radius: 6px 6px 3px 3px; transition: height .3s ease; }
+.tally-col .tally-n { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.tally-bar { width: 30px; background: var(--blue); border-radius: 6px 6px 3px 3px; transition: height .3s ease; }
 /* the most-voted estimate(s) get the app's orange accent */
 .tally-bar.mode { background: var(--orange); }
 .tally-col.mode .tally-n, .tally-col.mode .tally-val { color: var(--orange); }
-.tally-val { font-size: 15px; font-weight: 800; color: var(--blue-dark); }
+.tally-val { font-size: 20px; font-weight: 800; color: var(--blue-dark); line-height: 1; }
+.tally-cap { font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 
 /* ---------- PLAYER SEAT ---------- */
 .seat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
