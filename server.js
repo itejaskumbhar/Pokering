@@ -36,16 +36,17 @@ function buildState(room) {
   }));
 
   // Stats cover the cards currently face-up (all of them once fully revealed,
-  // a subset while some players are re-voting).
+  // a subset while some players are re-voting). We report how many cards fell
+  // on each value, e.g. { "5": 2, "13": 3 }.
   let stats = null;
   if (anyShown) {
     const values = all.filter((p) => p.shown).map((p) => p.vote);
-    const numeric = values.filter((v) => v !== '?' && v !== '☕' && !isNaN(parseFloat(v))).map(Number);
-    const average = numeric.length
-      ? Math.round((numeric.reduce((a, b) => a + b, 0) / numeric.length) * 10) / 10
-      : null;
-    const consensus = allShown && values.length > 1 && values.every((v) => v === values[0]);
-    stats = { average, consensus, votedCount: values.length };
+    const counts = {};
+    values.forEach((v) => {
+      counts[v] = (counts[v] || 0) + 1;
+    });
+    const consensus = allShown && values.length > 1 && Object.keys(counts).length === 1;
+    stats = { counts, consensus, votedCount: values.length };
   }
 
   return { revealed: allShown, anyShown, players, stats };
@@ -87,6 +88,10 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     const roomObj = getRoom(roomId);
     roomObj.players.set(socket.id, { name: displayName, vote: null, shown: false });
+    // A new participant means a new estimation context: clear the round so
+    // everyone (re)votes fresh. Prevents a stale/partial reveal from an early
+    // voter getting stuck when others join afterwards.
+    resetRound(roomObj);
     socket.emit('joined', { id: socket.id, roomId });
     broadcast(roomId);
   });

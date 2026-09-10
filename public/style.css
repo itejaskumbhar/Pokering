@@ -110,9 +110,22 @@ button { font-family: inherit; cursor: pointer; }
   display: grid; place-items: center; padding: 30px;
 }
 .table-msg { color: var(--blue-dark); font-size: 20px; font-weight: 700; text-align: center; }
-.table-msg .big { font-size: 40px; display: block; margin-bottom: 4px; }
-.table-msg .sub { font-size: 14px; font-weight: 600; color: var(--muted); }
-.table-msg .agree { color: var(--orange); font-weight: 700; }
+.table-msg .sub { font-size: 14px; font-weight: 600; color: var(--muted); display: block; margin-top: 12px; }
+.table-msg .agree { color: var(--orange); font-weight: 700; margin-top: 6px; }
+
+/* tally: how many cards landed on each value */
+.tally { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.tally-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.tally-card {
+  width: 48px; height: 66px; border-radius: 10px;
+  background: #fff; border: 2px solid var(--blue); color: var(--blue-dark);
+  font-size: 22px; font-weight: 800; display: grid; place-items: center; box-shadow: var(--shadow);
+}
+.tally-count {
+  min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px;
+  background: var(--blue); color: #fff; font-size: 13px; font-weight: 800;
+  display: grid; place-items: center;
+}
 
 /* ---------- PLAYER SEAT ---------- */
 .seat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }

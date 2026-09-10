@@ -126,12 +126,18 @@ function render(state) {
     (i < half ? rowTop : rowBottom).appendChild(seat);
   });
 
-  // center message
+  // center message — tally of how many cards landed on each value
   if (!anyShown) {
     tableMsg.innerHTML = 'Pick your cards!';
   } else {
-    const avg = stats && stats.average !== null ? stats.average : '—';
-    let html = `<span class="big">${avg}</span><span class="sub">average · ${stats.votedCount} vote${stats.votedCount === 1 ? '' : 's'}</span>`;
+    const counts = (stats && stats.counts) || {};
+    const items = CARDS.filter((v) => counts[v])
+      .map(
+        (v) =>
+          `<div class="tally-item"><span class="tally-card">${v}</span><span class="tally-count">${counts[v]}</span></div>`
+      )
+      .join('');
+    let html = `<div class="tally">${items}</div><span class="sub">${stats.votedCount} card${stats.votedCount === 1 ? '' : 's'} revealed</span>`;
     if (stats && stats.consensus) html += `<div class="agree">Everyone agrees! 🎉</div>`;
     tableMsg.innerHTML = html;
   }
