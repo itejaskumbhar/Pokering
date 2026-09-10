@@ -22,26 +22,33 @@ function getRoom(id) {
 }
 
 function buildState(room) {
+  const all = [...room.players.values()];
+  const anyShown = all.some((p) => p.shown);
+  const allShown = all.length > 0 && all.every((p) => p.shown);
+
   const players = [...room.players.entries()].map(([id, p]) => ({
     id,
     name: p.name,
     hasVoted: p.vote !== null,
-    // Only expose the actual value once the round is revealed.
-    vote: room.revealed ? p.vote : null,
+    shown: p.shown,
+    // Only expose the actual value for players whose card is face-up.
+    vote: p.shown ? p.vote : null,
   }));
 
+  // Stats cover the cards currently face-up (all of them once fully revealed,
+  // a subset while some players are re-voting).
   let stats = null;
-  if (room.revealed) {
-    const values = [...room.players.values()].map((p) => p.vote).filter((v) => v !== null);
+  if (anyShown) {
+    const values = all.filter((p) => p.shown).map((p) => p.vote);
     const numeric = values.filter((v) => v !== '?' && v !== '☕' && !isNaN(parseFloat(v))).map(Number);
     const average = numeric.length
       ? Math.round((numeric.reduce((a, b) => a + b, 0) / numeric.length) * 10) / 10
       : null;
-    const consensus = values.length > 1 && values.every((v) => v === values[0]);
+    const consensus = allShown && values.length > 1 && values.every((v) => v === values[0]);
     stats = { average, consensus, votedCount: values.length };
   }
 
-  return { revealed: room.revealed, players, stats };
+  return { revealed: allShown, anyShown, players, stats };
 }
 
 function broadcast(roomId) {
@@ -50,18 +57,24 @@ function broadcast(roomId) {
   io.to(roomId).emit('state', buildState(room));
 }
 
-// Reveal automatically once every player in the room has voted.
+// Flip every card face-up once everyone has voted AND nobody is currently
+// shown. This fires on the first full round, and again only after a complete
+// re-vote cycle — so a single person re-voting does NOT re-reveal the room.
 function maybeReveal(room) {
   const players = [...room.players.values()];
-  if (players.length > 0 && players.every((p) => p.vote !== null)) {
-    room.revealed = true;
+  const allVoted = players.length > 0 && players.every((p) => p.vote !== null);
+  const anyShown = players.some((p) => p.shown);
+  if (allVoted && !anyShown) {
+    players.forEach((p) => {
+      p.shown = true;
+    });
   }
 }
 
 function resetRound(room) {
-  room.revealed = false;
   room.players.forEach((p) => {
     p.vote = null;
+    p.shown = false;
   });
 }
 
@@ -73,10 +86,7 @@ io.on('connection', (socket) => {
     const displayName = String(name || '').trim().slice(0, 24) || 'Anon';
     socket.join(roomId);
     const roomObj = getRoom(roomId);
-    roomObj.players.set(socket.id, { name: displayName, vote: null });
-    // A newcomer starts a fresh round: clear any revealed/stale votes so
-    // everyone re-estimates together instead of seeing a finished round.
-    if (roomObj.revealed) resetRound(roomObj);
+    roomObj.players.set(socket.id, { name: displayName, vote: null, shown: false });
     socket.emit('joined', { id: socket.id, roomId });
     broadcast(roomId);
   });
@@ -87,11 +97,11 @@ io.on('connection', (socket) => {
     const player = room.players.get(socket.id);
     if (!player) return;
 
-    // Picking a card after the reveal starts a fresh round for the whole
-    // room: all votes are cleared and hidden again, then this pick is recorded.
-    if (room.revealed) resetRound(room);
-
+    // Picking a card always hides just YOUR card (so a re-vote after the
+    // reveal re-conceals only you — everyone else keeps their revealed card
+    // until they choose to change too).
     player.vote = String(card);
+    player.shown = false;
     maybeReveal(room);
     broadcast(roomId);
   });

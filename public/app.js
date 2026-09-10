@@ -104,7 +104,7 @@ function showLogin(message) {
 
 // ---- render ----
 function render(state) {
-  const { players, revealed, stats } = state;
+  const { players, anyShown, stats } = state;
 
   // clear my selection if a new round wiped my vote
   const me = players.find((p) => p.id === myId);
@@ -115,19 +115,19 @@ function render(state) {
   const voted = players.filter((p) => p.hasVoted).length;
   votedCount.textContent = voted;
   totalCount.textContent = players.length;
-  newRoundBtn.hidden = !revealed;
+  newRoundBtn.hidden = !anyShown;
 
   // seats: split around the table
   rowTop.innerHTML = '';
   rowBottom.innerHTML = '';
   const half = Math.ceil(players.length / 2);
   players.forEach((p, i) => {
-    const seat = buildSeat(p, revealed);
+    const seat = buildSeat(p);
     (i < half ? rowTop : rowBottom).appendChild(seat);
   });
 
   // center message
-  if (!revealed) {
+  if (!anyShown) {
     tableMsg.innerHTML = 'Pick your cards!';
   } else {
     const avg = stats && stats.average !== null ? stats.average : '—';
@@ -137,14 +137,14 @@ function render(state) {
   }
 }
 
-function buildSeat(player, revealed) {
+function buildSeat(player) {
   const seat = document.createElement('div');
   seat.className = 'seat' + (player.id === myId ? ' is-you' : '');
   seat.dataset.id = player.id;
 
   const card = document.createElement('div');
   card.className = 'seat-card';
-  if (revealed && player.vote !== null) {
+  if (player.shown && player.vote !== null) {
     card.classList.add('revealed');
     card.textContent = player.vote;
   } else if (player.hasVoted) {
