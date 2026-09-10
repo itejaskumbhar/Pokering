@@ -5,6 +5,7 @@ const REACTIONS = ['🎯', '✈️', '💰', '❤️', '😊'];
 
 let myId = null;
 let myVote = null; // local memory of my current pick (server hides it from others while voting)
+let currentRoom = null;
 
 // ---- elements ----
 const loginSection = document.getElementById('login');
@@ -23,10 +24,20 @@ const tableMsg = document.getElementById('table-msg');
 const deck = document.getElementById('deck');
 const newRoundBtn = document.getElementById('new-round-btn');
 const leaveBtn = document.getElementById('leave-btn');
+const shareBtn = document.getElementById('share-btn');
 
 // remember last used name/room
 nameInput.value = localStorage.getItem('pk-name') || '';
 roomInput.value = localStorage.getItem('pk-room') || '';
+
+// a shared link like ?room=sprint7 pre-fills the room so the invitee only
+// has to type their name
+const linkRoom = new URLSearchParams(location.search).get('room');
+if (linkRoom) {
+  roomInput.value = linkRoom;
+  // focus the name field since the room is already filled in
+  setTimeout(() => nameInput.focus(), 0);
+}
 
 // ---- deck (built once) ----
 CARDS.forEach((value) => {
@@ -66,10 +77,44 @@ leaveBtn.addEventListener('click', () => {
 
 newRoundBtn.addEventListener('click', () => socket.emit('newRound'));
 
+// copy an invite link for the current room to the clipboard
+shareBtn.addEventListener('click', async () => {
+  if (!currentRoom) return;
+  const url = `${location.origin}${location.pathname}?room=${encodeURIComponent(currentRoom)}`;
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(url);
+    ok = true;
+  } catch {
+    // fallback for non-secure contexts where the clipboard API is blocked
+    const tmp = document.createElement('input');
+    tmp.value = url;
+    document.body.appendChild(tmp);
+    tmp.select();
+    try {
+      ok = document.execCommand('copy');
+    } catch {
+      ok = false;
+    }
+    tmp.remove();
+  }
+  if (ok) {
+    shareBtn.textContent = '✓ Link copied!';
+    shareBtn.classList.add('copied');
+    setTimeout(() => {
+      shareBtn.textContent = '🔗 Share link';
+      shareBtn.classList.remove('copied');
+    }, 1600);
+  } else {
+    window.prompt('Copy this invite link:', url);
+  }
+});
+
 // ---- socket events ----
 socket.on('joined', ({ id, roomId }) => {
   myId = id;
   myVote = null;
+  currentRoom = roomId;
   roomLabel.textContent = roomId;
   loginSection.hidden = true;
   roomSection.hidden = false;

@@ -96,6 +96,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
 .btn-ghost.danger:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-soft); }
+.btn-ghost.copied { border-color: var(--blue); color: #fff; background: var(--blue); }
 
 .stage {
   flex: 1;
