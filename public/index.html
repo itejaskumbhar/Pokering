@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pokering — Planning Poker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- LOGIN -->
+  <section id="login" class="login">
+    <div class="login-card">
+      <div class="brand">
+        <span class="brand-mark">♠</span>
+        <h1>Pokering</h1>
+      </div>
+      <p class="subtitle">Planning poker for agile refinement</p>
+
+      <form id="login-form">
+        <label>
+          Your name
+          <input id="name-input" type="text" placeholder="e.g. Tejas" maxlength="24" autocomplete="off" required />
+        </label>
+        <label>
+          Room
+          <input id="room-input" type="text" placeholder="e.g. refinement" maxlength="32" autocomplete="off" required />
+        </label>
+        <button type="submit" class="btn-primary">Enter room</button>
+      </form>
+
+      <p id="login-msg" class="login-msg" hidden></p>
+    </div>
+  </section>
+
+  <!-- ROOM -->
+  <section id="room" class="room" hidden>
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="brand-mark small">♠</span>
+        <span class="room-name" id="room-label"></span>
+      </div>
+      <div class="topbar-right">
+        <span class="count-pill"><span id="voted-count">0</span>/<span id="total-count">0</span> voted</span>
+        <button id="new-round-btn" class="btn-ghost" hidden>New round</button>
+        <button id="leave-btn" class="btn-ghost danger">Leave</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div class="table-row" id="row-top"></div>
+
+      <div class="poker-table" id="poker-table">
+        <div class="table-msg" id="table-msg">Pick your cards!</div>
+      </div>
+
+      <div class="table-row" id="row-bottom"></div>
+    </main>
+
+    <footer class="deck" id="deck"></footer>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
