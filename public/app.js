@@ -176,13 +176,17 @@ function render(state) {
     tableMsg.innerHTML = 'Pick your cards!';
   } else {
     const counts = (stats && stats.counts) || {};
-    const items = CARDS.filter((v) => counts[v])
-      .map(
-        (v) =>
-          `<div class="tally-item"><span class="tally-card">${v}</span><span class="tally-count">${counts[v]}</span></div>`
-      )
+    const values = CARDS.filter((v) => counts[v]);
+    const max = Math.max(1, ...values.map((v) => counts[v]));
+    const MAX_H = 72;
+    const cols = values
+      .map((v) => {
+        const h = Math.max(12, Math.round((counts[v] / max) * MAX_H));
+        const cls = counts[v] === max ? ' mode' : '';
+        return `<div class="tally-col${cls}"><span class="tally-n">${counts[v]}</span><span class="tally-bar${cls}" style="height:${h}px"></span><span class="tally-val">${v}</span></div>`;
+      })
       .join('');
-    let html = `<div class="tally">${items}</div><span class="sub">${stats.votedCount} card${stats.votedCount === 1 ? '' : 's'} revealed</span>`;
+    let html = `<div class="tally-title">Results</div><div class="tally">${cols}</div><span class="sub">${stats.votedCount} card${stats.votedCount === 1 ? '' : 's'} revealed</span>`;
     if (stats && stats.consensus) html += `<div class="agree">Everyone agrees! 🎉</div>`;
     tableMsg.innerHTML = html;
   }

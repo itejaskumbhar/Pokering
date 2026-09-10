@@ -7,10 +7,11 @@
   --orange-soft: #ffe4dc;
   --ink: #1b2333;
   --muted: #7c8aa5;
-  --line: #e2e8f4;
-  --bg: #f3f6fb;
-  --card-radius: 12px;
-  --shadow: 0 8px 24px rgba(31, 66, 135, 0.12);
+  --line: #e6ebf3;
+  --bg: #eceff5;
+  --well: #e6f0fb;
+  --card-radius: 16px;
+  --shadow: 0 10px 28px rgba(31, 66, 135, 0.10);
 }
 
 * { box-sizing: border-box; }
@@ -102,31 +103,44 @@ button { font-family: inherit; cursor: pointer; }
   flex: 1;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 24px; padding: 40px 20px;
+  background-color: var(--bg);
+  /* soft top glow + faint blueprint building watermark, echoing the construction app */
+  background-image:
+    radial-gradient(1000px 460px at 50% -10%, rgba(255,255,255,.75), rgba(255,255,255,0)),
+    url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><g fill='none' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'><path d='M50 250 L50 120 L140 80 L140 250' stroke='%232f6fed' opacity='0.06'/><path d='M140 150 L230 150 L230 250' stroke='%232f6fed' opacity='0.06'/><path d='M35 250 L250 250' stroke='%232f6fed' opacity='0.06'/><path d='M50 120 L140 80' stroke='%23f4623a' opacity='0.08'/></g></svg>");
+  background-repeat: no-repeat, repeat;
+  background-size: auto, 300px 300px;
 }
 .table-row { display: flex; gap: 46px; flex-wrap: wrap; justify-content: center; min-height: 20px; }
 
 .poker-table {
-  width: min(520px, 80vw); min-height: 150px;
-  background: var(--blue-softer); border-radius: 24px;
+  width: min(520px, 80vw); min-height: 160px;
+  background: #fff; border: 1px solid var(--line); border-radius: 20px;
+  box-shadow: var(--shadow);
   display: grid; place-items: center; padding: 30px;
 }
 .table-msg { color: var(--blue-dark); font-size: 20px; font-weight: 700; text-align: center; }
 .table-msg .sub { font-size: 14px; font-weight: 600; color: var(--muted); display: block; margin-top: 12px; }
 .table-msg .agree { color: var(--orange); font-weight: 700; margin-top: 6px; }
 
-/* tally: how many cards landed on each value */
-.tally { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
-.tally-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.tally-card {
-  width: 48px; height: 66px; border-radius: 10px;
-  background: #fff; border: 2px solid var(--blue); color: var(--blue-dark);
-  font-size: 22px; font-weight: 800; display: grid; place-items: center; box-shadow: var(--shadow);
+/* tally: compact bar chart of how many cards landed on each value —
+   deliberately unlike the poker cards so it reads as a summary */
+.tally-title {
+  font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px;
 }
-.tally-count {
-  min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px;
-  background: var(--blue); color: #fff; font-size: 13px; font-weight: 800;
-  display: grid; place-items: center;
+/* pale-blue well behind the chart, echoing the app's circular icon wells */
+.tally {
+  display: flex; align-items: flex-end; justify-content: center; gap: 18px;
+  min-height: 72px; background: var(--well); border-radius: 16px; padding: 18px 22px 14px;
 }
+.tally-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.tally-col .tally-n { font-size: 13px; font-weight: 800; color: var(--muted); }
+.tally-bar { width: 26px; background: var(--blue); border-radius: 6px 6px 3px 3px; transition: height .3s ease; }
+/* the most-voted estimate(s) get the app's orange accent */
+.tally-bar.mode { background: var(--orange); }
+.tally-col.mode .tally-n, .tally-col.mode .tally-val { color: var(--orange); }
+.tally-val { font-size: 15px; font-weight: 800; color: var(--blue-dark); }
 
 /* ---------- PLAYER SEAT ---------- */
 .seat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -136,10 +150,10 @@ button { font-family: inherit; cursor: pointer; }
   transition: transform .18s, box-shadow .18s;
 }
 /* empty / not voted */
-.seat-card.empty { background: #e6ebf5; border: 1.5px solid transparent; }
+.seat-card.empty { background: #e7edf6; border: 1px solid transparent; }
 /* current user waiting to vote */
 .seat-card.you-waiting {
-  background: #fff; border: 2px dashed var(--blue);
+  background: #fff; border: 2px dashed #a9c4ef; box-shadow: 0 6px 18px rgba(31, 66, 135, 0.06);
 }
 .seat-card.you-waiting::after {
   content: "👁"; font-size: 20px; opacity: .55;
@@ -153,9 +167,9 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: var(--shadow);
   animation: pop .18s ease;
 }
-/* revealed value */
+/* revealed value — clean white tile with a small orange accent on top */
 .seat-card.revealed {
-  background: #fff; border: 2px solid var(--blue);
+  background: #fff; border: 1px solid var(--line); border-top: 3px solid var(--orange);
   color: var(--blue-dark); font-size: 26px; font-weight: 800;
   box-shadow: var(--shadow); animation: flip .3s ease;
 }
@@ -208,15 +222,17 @@ button { font-family: inherit; cursor: pointer; }
   padding: 22px; background: #fff; border-top: 1px solid var(--line);
 }
 .deck-card {
-  width: 58px; height: 84px; border-radius: var(--card-radius);
-  background: #fff; border: 2px solid var(--blue-soft);
+  width: 58px; height: 84px; border-radius: 14px;
+  background: #fff; border: 1px solid var(--line);
   color: var(--blue); font-size: 22px; font-weight: 800;
   display: grid; place-items: center;
-  transition: transform .14s, border-color .14s, box-shadow .14s;
+  box-shadow: 0 4px 14px rgba(31, 66, 135, 0.06);
+  transition: transform .14s, border-color .14s, box-shadow .14s, color .14s;
 }
-.deck-card:hover { transform: translateY(-8px); border-color: var(--blue); box-shadow: var(--shadow); }
+.deck-card:hover { transform: translateY(-8px); border-color: var(--orange); color: var(--orange); box-shadow: var(--shadow); }
 .deck-card.selected {
   transform: translateY(-12px);
   background: var(--blue); color: #fff; border-color: var(--blue);
   box-shadow: var(--shadow);
 }
+.deck-card.selected:hover { color: #fff; border-color: var(--blue); }
