@@ -99,6 +99,28 @@ button { font-family: inherit; cursor: pointer; }
 .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
 .btn-ghost.danger:hover { border-color: var(--orange); color: var(--orange); background: var(--orange-soft); }
 .btn-ghost.copied { border-color: var(--blue); color: #fff; background: var(--blue); }
+.watching-pill { background: #e7ecf3; color: var(--muted); }
+
+/* Spectate on/off toggle switch */
+.switch {
+  display: inline-flex; align-items: center; gap: 9px; cursor: pointer; user-select: none;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  border: 1.5px solid var(--line); border-radius: 8px; padding: 6px 11px; transition: border-color .15s, color .15s;
+}
+.switch:hover { border-color: var(--blue); }
+.switch:has(input:checked) { border-color: var(--blue); color: var(--blue); }
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.switch-track {
+  width: 34px; height: 18px; border-radius: 999px; background: #cdd6e6;
+  position: relative; flex-shrink: 0; transition: background .15s;
+}
+.switch-thumb {
+  position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .15s;
+}
+.switch input:checked + .switch-track { background: var(--blue); }
+.switch input:checked + .switch-track .switch-thumb { left: 18px; }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--blue-soft); outline-offset: 2px; }
 
 .stage {
   flex: 1; min-height: 0; overflow: auto;
@@ -123,6 +145,7 @@ button { font-family: inherit; cursor: pointer; }
 .table-msg { color: var(--blue-dark); font-size: 20px; font-weight: 700; text-align: center; }
 .table-msg .sub { font-size: 14px; font-weight: 600; color: var(--muted); display: block; margin-top: 12px; }
 .table-msg .agree { color: var(--orange); font-weight: 700; margin-top: 6px; }
+.table-msg .wait { color: var(--muted); font-weight: 700; }
 
 /* tally: compact bar chart of how many cards landed on each value —
    deliberately unlike the poker cards so it reads as a summary */
@@ -153,6 +176,10 @@ button { font-family: inherit; cursor: pointer; }
 }
 /* empty / not voted */
 .seat-card.empty { background: #e7edf6; border: 1px solid transparent; }
+/* spectator: watches only, no card */
+.seat-card.spectator { background: #eef2f8; border: 1.5px dashed #c3d1e8; box-shadow: none; }
+.seat-card.spectator::after { content: "👁"; font-size: 24px; opacity: .5; }
+.seat-name.is-spectator { color: var(--muted); }
 /* current user waiting to vote */
 .seat-card.you-waiting {
   background: #fff; border: 2px dashed #a9c4ef; box-shadow: 0 6px 18px rgba(31, 66, 135, 0.06);
@@ -239,3 +266,9 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: var(--shadow);
 }
 .deck-card.selected:hover { color: #fff; border-color: var(--blue); }
+
+/* spectator hint (replaces the deck when you're watching) */
+.spectator-hint {
+  flex-shrink: 0; text-align: center; padding: 16px; font-size: 14px; font-weight: 600;
+  color: var(--blue-dark); background: var(--well); border-top: 1px solid var(--line);
+}

@@ -23,13 +23,16 @@ function getRoom(id) {
 
 function buildState(room) {
   const all = [...room.players.values()];
-  const anyShown = all.some((p) => p.shown);
-  const allShown = all.length > 0 && all.every((p) => p.shown);
+  // Only voters take part in the round; spectators just watch.
+  const voters = all.filter((p) => p.role === 'voter');
+  const anyShown = voters.some((p) => p.shown);
+  const allShown = voters.length > 0 && voters.every((p) => p.shown);
 
   const players = [...room.players.entries()].map(([id, p]) => ({
     id,
     name: p.name,
-    hasVoted: p.vote !== null,
+    role: p.role,
+    hasVoted: p.role === 'voter' && p.vote !== null,
     shown: p.shown,
     // Only expose the actual value for players whose card is face-up.
     vote: p.shown ? p.vote : null,
@@ -40,7 +43,7 @@ function buildState(room) {
   // on each value, e.g. { "5": 2, "13": 3 }.
   let stats = null;
   if (anyShown) {
-    const values = all.filter((p) => p.shown).map((p) => p.vote);
+    const values = voters.filter((p) => p.shown).map((p) => p.vote);
     const counts = {};
     values.forEach((v) => {
       counts[v] = (counts[v] || 0) + 1;
@@ -49,7 +52,15 @@ function buildState(room) {
     stats = { counts, consensus, votedCount: values.length };
   }
 
-  return { revealed: allShown, anyShown, players, stats };
+  return {
+    revealed: allShown,
+    anyShown,
+    players,
+    stats,
+    votersTotal: voters.length,
+    votersVoted: voters.filter((p) => p.vote !== null).length,
+    watching: all.length - voters.length,
+  };
 }
 
 function broadcast(roomId) {
@@ -62,11 +73,12 @@ function broadcast(roomId) {
 // shown. This fires on the first full round, and again only after a complete
 // re-vote cycle — so a single person re-voting does NOT re-reveal the room.
 function maybeReveal(room) {
-  const players = [...room.players.values()];
-  const allVoted = players.length > 0 && players.every((p) => p.vote !== null);
-  const anyShown = players.some((p) => p.shown);
+  // Reveal is decided by voters only — spectators never block it.
+  const voters = [...room.players.values()].filter((p) => p.role === 'voter');
+  const allVoted = voters.length > 0 && voters.every((p) => p.vote !== null);
+  const anyShown = voters.some((p) => p.shown);
   if (allVoted && !anyShown) {
-    players.forEach((p) => {
+    voters.forEach((p) => {
       p.shown = true;
     });
   }
@@ -87,7 +99,7 @@ io.on('connection', (socket) => {
     const displayName = String(name || '').trim().slice(0, 24) || 'Anon';
     socket.join(roomId);
     const roomObj = getRoom(roomId);
-    roomObj.players.set(socket.id, { name: displayName, vote: null, shown: false });
+    roomObj.players.set(socket.id, { name: displayName, vote: null, shown: false, role: 'voter' });
     // A new participant means a new estimation context: clear the round so
     // everyone (re)votes fresh. Prevents a stale/partial reveal from an early
     // voter getting stuck when others join afterwards.
@@ -100,13 +112,30 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomId);
     if (!room) return;
     const player = room.players.get(socket.id);
-    if (!player) return;
+    if (!player || player.role !== 'voter') return; // spectators can't vote
 
     // Picking a card always hides just YOUR card (so a re-vote after the
     // reveal re-conceals only you — everyone else keeps their revealed card
     // until they choose to change too).
     player.vote = String(card);
     player.shown = false;
+    maybeReveal(room);
+    broadcast(roomId);
+  });
+
+  // Switch between voting and spectating without leaving the room.
+  socket.on('setRole', ({ spectator }) => {
+    const room = rooms.get(roomId);
+    if (!room) return;
+    const player = room.players.get(socket.id);
+    if (!player) return;
+    player.role = spectator ? 'spectator' : 'voter';
+    if (spectator) {
+      // Leaving the voting pool: drop their card and re-check the reveal, in
+      // case they were the last voter the room was waiting on.
+      player.vote = null;
+      player.shown = false;
+    }
     maybeReveal(room);
     broadcast(roomId);
   });

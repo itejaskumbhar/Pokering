@@ -6,6 +6,7 @@ const REACTIONS = ['🎯', '✈️', '💰', '❤️', '😊'];
 let myId = null;
 let myVote = null; // local memory of my current pick (server hides it from others while voting)
 let currentRoom = null;
+let myRole = 'voter';
 
 // ---- elements ----
 const loginSection = document.getElementById('login');
@@ -25,6 +26,10 @@ const deck = document.getElementById('deck');
 const newRoundBtn = document.getElementById('new-round-btn');
 const leaveBtn = document.getElementById('leave-btn');
 const shareBtn = document.getElementById('share-btn');
+const roleToggle = document.getElementById('role-toggle');
+const watchingPill = document.getElementById('watching-pill');
+const watchingCount = document.getElementById('watching-count');
+const spectatorHint = document.getElementById('spectator-hint');
 
 // remember last used name/room
 nameInput.value = localStorage.getItem('pk-name') || '';
@@ -76,6 +81,11 @@ leaveBtn.addEventListener('click', () => {
 });
 
 newRoundBtn.addEventListener('click', () => socket.emit('newRound'));
+
+// toggle myself between voting and spectating
+roleToggle.addEventListener('change', () => {
+  socket.emit('setRole', { spectator: roleToggle.checked });
+});
 
 // copy an invite link for the current room to the clipboard
 shareBtn.addEventListener('click', async () => {
@@ -149,17 +159,25 @@ function showLogin(message) {
 
 // ---- render ----
 function render(state) {
-  const { players, anyShown, stats } = state;
+  const { players, anyShown, stats, votersTotal, votersVoted, watching } = state;
 
-  // clear my selection if a new round wiped my vote
   const me = players.find((p) => p.id === myId);
-  if (me && !me.hasVoted) myVote = null;
+  const amSpectator = !!(me && me.role === 'spectator');
+  myRole = amSpectator ? 'spectator' : 'voter';
+  // clear my selection if a new round wiped my vote (or I switched to watching)
+  if (!me || !me.hasVoted) myVote = null;
   highlightDeck();
 
-  // counts
-  const voted = players.filter((p) => p.hasVoted).length;
-  votedCount.textContent = voted;
-  totalCount.textContent = players.length;
+  // role toggle + deck visibility for me
+  roleToggle.checked = amSpectator;
+  deck.hidden = amSpectator;
+  spectatorHint.hidden = !amSpectator;
+
+  // counts: voters only, plus a separate watcher tally
+  votedCount.textContent = votersVoted;
+  totalCount.textContent = votersTotal;
+  watchingPill.hidden = !watching;
+  watchingCount.textContent = watching;
   newRoundBtn.hidden = !anyShown;
 
   // seats: split around the table
@@ -171,8 +189,10 @@ function render(state) {
     (i < half ? rowTop : rowBottom).appendChild(seat);
   });
 
-  // center message — tally of how many cards landed on each value
-  if (!anyShown) {
+  // center message
+  if (votersTotal === 0) {
+    tableMsg.innerHTML = '<span class="wait">Waiting for voters…</span>';
+  } else if (!anyShown) {
     tableMsg.innerHTML = 'Pick your cards!';
   } else {
     const counts = (stats && stats.counts) || {};
@@ -187,7 +207,7 @@ function render(state) {
         return `<div class="tally-col${cls}"><span class="tally-n">${votes}</span><span class="tally-bar${cls}" style="height:${h}px"></span><span class="tally-val">${v}</span><span class="tally-cap">points</span></div>`;
       })
       .join('');
-    let html = `<div class="tally-title">Results — votes per estimate</div><div class="tally">${cols}</div><span class="sub">${stats.votedCount} of ${players.length} revealed</span>`;
+    let html = `<div class="tally-title">Results — votes per estimate</div><div class="tally">${cols}</div><span class="sub">${stats.votedCount} of ${votersTotal} revealed</span>`;
     if (stats && stats.consensus) html += `<div class="agree">Everyone agrees! 🎉</div>`;
     tableMsg.innerHTML = html;
   }
@@ -200,7 +220,9 @@ function buildSeat(player) {
 
   const card = document.createElement('div');
   card.className = 'seat-card';
-  if (player.shown && player.vote !== null) {
+  if (player.role === 'spectator') {
+    card.classList.add('spectator'); // eye badge, no card — just watching
+  } else if (player.shown && player.vote !== null) {
     card.classList.add('revealed');
     card.textContent = player.vote;
   } else if (player.hasVoted) {
@@ -214,6 +236,7 @@ function buildSeat(player) {
   const name = document.createElement('div');
   name.className = 'seat-name';
   name.textContent = player.name;
+  if (player.role === 'spectator') name.classList.add('is-spectator');
 
   // hover toolbar (reactions + kick) — not shown on yourself
   if (player.id !== myId) {
