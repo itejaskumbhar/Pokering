@@ -141,6 +141,7 @@ button { font-family: inherit; cursor: pointer; }
   background: #fff; border: 1px solid var(--line); border-radius: 20px;
   box-shadow: var(--shadow);
   display: grid; place-items: center; padding: 22px 26px;
+  position: relative; z-index: 1;
 }
 .table-msg { color: var(--blue-dark); font-size: 20px; font-weight: 700; text-align: center; }
 .table-msg .sub { font-size: 14px; font-weight: 600; color: var(--muted); display: block; margin-top: 12px; }
@@ -169,6 +170,7 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ---------- PLAYER SEAT ---------- */
 .seat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.seat:hover { z-index: 30; } /* lift the hovered seat + its toolbar above the results tile */
 .seat-card {
   width: 60px; height: 82px; border-radius: var(--card-radius);
   display: grid; place-items: center; position: relative;
@@ -226,6 +228,10 @@ button { font-family: inherit; cursor: pointer; }
   content: ""; position: absolute; left: -8px; right: -8px; top: 100%; height: 16px;
 }
 .seat:hover .seat-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+/* top-row seats: show the toolbar BELOW the card so it isn't clipped by the
+   top edge / the stage's scroll area */
+#row-top .seat-tools { top: calc(100% + 8px); bottom: auto; }
+#row-top .seat-tools::after { top: auto; bottom: 100%; }
 .seat-tools button {
   border: none; background: transparent; font-size: 16px; line-height: 1;
   padding: 4px; border-radius: 50%; transition: background .12s;
@@ -266,6 +272,18 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: var(--shadow);
 }
 .deck-card.selected:hover { color: #fff; border-color: var(--blue); }
+
+/* confetti burst on consensus */
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 9999; }
+.confetti-piece {
+  position: absolute; top: -24px; width: 9px; height: 14px; border-radius: 2px; opacity: .95;
+  will-change: transform; animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translate(0, -24px) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--x), 104vh) rotate(var(--r)); opacity: .9; }
+}
+@media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
 
 /* spectator hint (replaces the deck when you're watching) */
 .spectator-hint {

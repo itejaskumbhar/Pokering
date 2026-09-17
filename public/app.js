@@ -7,6 +7,7 @@ let myId = null;
 let myVote = null; // local memory of my current pick (server hides it from others while voting)
 let currentRoom = null;
 let myRole = 'voter';
+let celebrated = false; // confetti fires once per revealed consensus
 
 // ---- elements ----
 const loginSection = document.getElementById('login');
@@ -180,6 +181,14 @@ function render(state) {
   watchingCount.textContent = watching;
   newRoundBtn.hidden = !anyShown;
 
+  // celebrate consensus once per reveal
+  const consensus = !!(anyShown && stats && stats.consensus);
+  if (consensus && !celebrated) {
+    launchConfetti();
+    celebrated = true;
+  }
+  if (!anyShown) celebrated = false;
+
   // seats: split around the table
   rowTop.innerHTML = '';
   rowBottom.innerHTML = '';
@@ -208,7 +217,7 @@ function render(state) {
       })
       .join('');
     let html = `<div class="tally-title">Results — votes per estimate</div><div class="tally">${cols}</div><span class="sub">${stats.votedCount} of ${votersTotal} revealed</span>`;
-    if (stats && stats.consensus) html += `<div class="agree">Everyone agrees! 🎉</div>`;
+    if (stats && stats.consensus) html += `<div class="agree">Everyone agrees!</div>`;
     tableMsg.innerHTML = html;
   }
 }
@@ -263,4 +272,26 @@ function buildSeat(player) {
   seat.appendChild(card);
   seat.appendChild(name);
   return seat;
+}
+
+// ---- confetti ----
+function launchConfetti() {
+  const layer = document.getElementById('confetti');
+  if (!layer) return;
+  const colors = ['#2f6fed', '#f4623a', '#37b24d', '#f7b500', '#e64980', '#1e56c9'];
+  for (let i = 0; i < 90; i++) {
+    const p = document.createElement('span');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = Math.random() * 0.3 + 's';
+    p.style.animationDuration = 2.2 + Math.random() * 1.6 + 's';
+    p.style.setProperty('--x', Math.random() * 240 - 120 + 'px');
+    p.style.setProperty('--r', Math.random() * 720 - 360 + 'deg');
+    const w = 6 + Math.random() * 6;
+    p.style.width = w + 'px';
+    p.style.height = w * 1.6 + 'px';
+    layer.appendChild(p);
+    setTimeout(() => p.remove(), 4200);
+  }
 }
