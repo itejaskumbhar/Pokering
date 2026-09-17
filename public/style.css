@@ -283,7 +283,6 @@ button { font-family: inherit; cursor: pointer; }
   0% { transform: translate(0, -24px) rotate(0); opacity: 1; }
   100% { transform: translate(var(--x), 104vh) rotate(var(--r)); opacity: .9; }
 }
-@media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
 
 /* spectator hint (replaces the deck when you're watching) */
 .spectator-hint {
